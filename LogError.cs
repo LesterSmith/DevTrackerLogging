@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Windows.Forms;
 using DataHelpers;
@@ -23,9 +20,10 @@ namespace DevTrackerLogging
                             ex.Message + eol +
                            "Error Type: " + ex.GetType().ToString() + eol +
                            "Error Details: " + eol + ex.ToString();
+#if DEBUG
                 if (showMsgBox)
                     MessageBox.Show(msg, "Program Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
+#endif
                 try
                 {
                     StackTrace st = new StackTrace(true);
@@ -45,8 +43,10 @@ namespace DevTrackerLogging
         public LogError(string err, bool showMsgBox, string moduleAndMethod)
         {
             string msg = $"Error Message from {moduleAndMethod}: " + err + eol;
+#if DEBUG
             if (showMsgBox)
                 MessageBox.Show(msg, "Program Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+#endif
             WriteErrorLogToDB(new StringBuilder(msg), moduleAndMethod);
         }
 
@@ -58,16 +58,22 @@ namespace DevTrackerLogging
 
         private void WriteErrorLogToDB(StringBuilder sb, string moduleAndMethod)
         {
-            Tuple<string, string> mm = SplitModuleFromMethod(moduleAndMethod);
-            _ = new DHMisc().WriteErrorLog(new ErrorLog
+            try
             {
-                Module = mm.Item1,
-                Method = mm.Item2,
-                Message = sb.ToString(),
-                DateCreated = DateTime.Now,
-                Machine = Environment.MachineName,
-                Username = Environment.UserName
-            });
+                Tuple<string, string> mm = SplitModuleFromMethod(moduleAndMethod);
+                _ = new DHMisc().WriteErrorLog(new ErrorLog
+                {
+                    Module = mm.Item1,
+                    Method = mm.Item2,
+                    Message = sb.ToString(),
+                    DateCreated = DateTime.Now,
+                    Machine = Environment.MachineName,
+                    Username = Environment.UserName
+                });
+            }
+            catch (Exception)
+            {
+            }
         }
     }
 }
